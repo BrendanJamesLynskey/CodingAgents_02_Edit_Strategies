@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodingAgents 02 — Edit Strategies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #0d1117;
+            --bg-code: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #76B900;
+            --accent-dim: #76B90044;
+            --accent-glow: #76B90033;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 2rem;
+        }
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem;
+            right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+        .slide code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            padding: 0.05rem 0.35rem;
+            border-radius: 3px;
+            color: #c9d1d9;
+        }
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .code-block pre { margin: 0; padding: 1rem; overflow-x: auto; }
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+        .type { color: #ffa657; }
+        .dir { color: #ff7b72; }
+        .mac { color: #ffa657; }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        .diagram-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-box {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .diagram-box.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-box.dim { color: var(--text-secondary); border-color: var(--border); }
+        .diagram-arrow { color: var(--accent); font-size: 1.3rem; font-weight: 700; }
+        .diagram-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-vertical .diagram-arrow { font-size: 1.1rem; }
+        .hierarchy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .hierarchy-level { display: flex; align-items: center; gap: 0.75rem; }
+        .hierarchy-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: right;
+        }
+        .hierarchy-items { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .hierarchy-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .hierarchy-item.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.85rem; }
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .callout p { margin-bottom: 0; }
+        .callout p + p { margin-top: 0.5rem; }
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+        .contents-list { list-style: none; padding-left: 0; counter-reset: contents; }
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+        .contents-list a { color: var(--text-primary); text-decoration: none; transition: color 0.2s; }
+        .contents-list a:hover { color: var(--accent); }
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas, .canvas-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
+        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3 { grid-template-columns: 1fr; }
+            .pipeline { gap: 0.15rem; }
+            .pipeline-step { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .hero h1 { font-size: 1.8rem; }
+            table { font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+<header class="hero">
+    <div class="series-label">Coding Agents Internals Series &mdash; Presentation 02</div>
+    <h1>How Agents Make <span class="accent">Changes</span></h1>
+    <p class="subtitle">Search-replace, unified diff, patch files &mdash; wire formats. Multi-file atomicity and rollback. Context-window management. The Read/Edit/Write tool trio. Aider vs Cursor vs Claude Code architectures. Test-driven edits. Failure recovery when the model produces a bad diff.</p>
+
+    <div class="tags">
+        <span class="tag">Unified Diff</span>
+        <span class="tag">Search-Replace</span>
+        <span class="tag">Multi-File Edits</span>
+        <span class="tag">Context Window</span>
+        <span class="tag">Read/Edit/Write</span>
+        <span class="tag">Aider</span>
+        <span class="tag">Cursor</span>
+        <span class="tag">Claude Code</span>
+        <span class="tag">TDD Agents</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">Load Context</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Model Edit</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Parse Diff</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Apply</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Test</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Verify / Retry</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We&rsquo;ll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">How Agents Make Changes</a></li>
+        <li><a href="#slide-02">Search-Replace, Unified Diff, Patch Files &mdash; Wire Formats</a></li>
+        <li><a href="#slide-03">Multi-File Edits &mdash; Atomicity, Rollback</a></li>
+        <li><a href="#slide-04">Context Window Management &mdash; Load, Summarise, Forget</a></li>
+        <li><a href="#slide-05">Tool Design for Editing &mdash; The Read/Edit/Write Trio</a></li>
+        <li><a href="#slide-06">Aider vs Cursor vs Claude Code &mdash; Three Architectures</a></li>
+        <li><a href="#slide-07">Test-Driven Agentic Edits</a></li>
+        <li><a href="#slide-08">Failure Recovery &mdash; When the Model Produces Bad Diffs</a></li>
+        <li><a href="#slide-09">What to Take Away</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>How Agents Make Changes</h2>
+    <p>A coding agent ultimately has to write bytes to files. The mechanism through which it does so is more varied than it appears: there are at least five distinct <em>edit formats</em> in use across production agents, each with a different precision/robustness trade-off.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Edit format</th><th>Used by</th><th>Pros</th><th>Cons</th></tr></thead>
+            <tbody>
+                <tr><td>Whole-file rewrite</td><td>Claude Code (small files), early GPT-4 coding assistants</td><td>Unambiguous &mdash; model outputs the complete new file</td><td>Wastes tokens on unchanged content; context-window hostile for large files</td></tr>
+                <tr><td>Search-replace block</td><td>Aider EDITOR format, Claude Code Edit tool</td><td>Compact; easy for models to generate; tolerates fuzz</td><td>Fails if search string appears multiple times; brittle on whitespace</td></tr>
+                <tr><td>Unified diff (GNU patch)</td><td>Aider DIFF format, GPT-Engineer</td><td>Standard; tooling support; git-compatible; compact for large files</td><td>Models frequently generate invalid context lines; off-by-one line numbers</td></tr>
+                <tr><td>AST-level patch</td><td>Research tools (Mentat, some IDE plugins)</td><td>Semantically correct; rename-safe</td><td>Requires language-specific AST; hard to generate from an LLM</td></tr>
+                <tr><td>Tool-call sequence (Read&rarr;Edit&rarr;Write)</td><td>Claude Code, OpenAI function-calling agents</td><td>Explicit, auditable; each step verifiable</td><td>Multiple round-trips; latency adds up for large edits</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">The central tension</div>
+        <p>A model that emits a <strong>complete file</strong> is never ambiguous about what it wants &mdash; but for a 1 000-line file, 95% of the output is unchanged content. A model that emits a <strong>diff</strong> is compact, but must get the context lines exactly right or <code>patch</code> rejects it. Most production agents settle on search-replace blocks because they hit the sweet spot: they are small yet unambiguous, and fuzzy-matching can be applied at the application layer to handle minor whitespace drift.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Search-Replace, Unified Diff, Patch Files &mdash; Wire Formats</h2>
+
+    <h3>Search-replace block</h3>
+    <p>Aider popularised this format for its EDITOR mode. The agent emits a fenced block containing the text to find and the text to substitute. Claude Code&rsquo;s <code>Edit</code> tool is a structured variant of the same idea.</p>
+
+    <div class="code-block">
+        <div class="code-header">Aider EDITOR search-replace format</div>
+<pre><code>src/db/pool.py
+<span class="str">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> SEARCH
+    <span class="kw">def</span> <span class="fn">acquire</span>(self):
+        conn = self._pool.pop()
+        <span class="kw">return</span> conn
+<span class="str">=======</span>
+    <span class="kw">async def</span> <span class="fn">acquire</span>(self) <span class="kw">-&gt;</span> <span class="type">Connection</span>:
+        <span class="kw">if not</span> self._pool:
+            <span class="kw">raise</span> <span class="type">PoolExhausted</span>(
+                f<span class="str">"pool exhausted after {self._max_size} conns"</span>
+            )
+        <span class="kw">return</span> self._pool.pop()
+<span class="str">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> REPLACE</code></pre>
+    </div>
+
+    <h3>Unified diff &mdash; wire format</h3>
+    <div class="code-block">
+        <div class="code-header">GNU unified diff (the format patch(1) expects)</div>
+<pre><code><span class="cm">--- a/src/db/pool.py   2025-04-24 10:12:00.000000000 +0000</span>
+<span class="cm">+++ b/src/db/pool.py   2025-04-24 11:00:00.000000000 +0000</span>
+<span class="dir">@@ -47,7 +47,11 @@</span>
+     <span class="kw">def</span> <span class="fn">_evict_idle</span>(self, max_idle_secs):
+         now = time.monotonic()
+
+<span class="cm">-    def acquire(self):</span>
+<span class="cm">-        conn = self._pool.pop()</span>
+<span class="cm">-        return conn</span>
+<span class="str">+    async def acquire(self) -&gt; Connection:</span>
+<span class="str">+        if not self._pool:</span>
+<span class="str">+            raise PoolExhausted(</span>
+<span class="str">+                f"pool exhausted after {self._max_size} conns"</span>
+<span class="str">+            )</span>
+<span class="str">+        return self._pool.pop()</span>
+
+     def release(self, conn):</code></pre>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Why models struggle with unified diffs</div>
+        <p>The <strong>hunk header</strong> <code>@@ -47,7 +47,11 @@</code> encodes the start line and line count for both the before and after blocks. Models frequently miscalculate the <code>+N,M</code> field (they count the replaced lines but forget to add the context lines). <code>patch --fuzz 3</code> tolerates context mismatches up to 3 lines &mdash; Aider&rsquo;s DIFF format relies on this. Claude Code avoids the problem entirely by using the Read&rarr;Edit&rarr;Write sequence where line numbers are never embedded in the output.</p>
+    </div>
+
+    <h3>Applying patches programmatically</h3>
+    <div class="code-block">
+        <div class="code-header">Python: apply a unified diff with fallback fuzz</div>
+<pre><code><span class="kw">import</span> subprocess, tempfile, pathlib
+
+<span class="kw">def</span> <span class="fn">apply_diff</span>(diff_text: <span class="type">str</span>, cwd: <span class="type">str</span>, fuzz: <span class="type">int</span> = <span class="num">3</span>) <span class="kw">-&gt;</span> <span class="type">bool</span>:
+    <span class="kw">with</span> tempfile.NamedTemporaryFile(suffix=<span class="str">'.patch'</span>, mode=<span class="str">'w'</span>, delete=<span class="kw">False</span>) <span class="kw">as</span> f:
+        f.write(diff_text)
+        patch_path = f.name
+    result = subprocess.run(
+        [<span class="str">'patch'</span>, <span class="str">'--unified'</span>, <span class="str">'--forward'</span>,
+         f<span class="str">'--fuzz={fuzz}'</span>, <span class="str">'-p1'</span>, <span class="str">'-i'</span>, patch_path],
+        cwd=cwd, capture_output=<span class="kw">True</span>, text=<span class="kw">True</span>
+    )
+    pathlib.Path(patch_path).unlink(missing_ok=<span class="kw">True</span>)
+    <span class="kw">return</span> result.returncode == <span class="num">0</span></code></pre>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>Multi-File Edits &mdash; Atomicity, Rollback</h2>
+    <p>Many real edits touch multiple files simultaneously: rename a function and update all its callers, change an API contract and update both the implementation and its tests. Applying these changes partially &mdash; some files updated, some not &mdash; leaves the repo in a broken state. Agents need a transactional strategy.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 680 260" width="680" height="260" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .ph2  { fill: rgba(118,185,0,0.04); stroke: #21262d; stroke-width: 1; }
+                .ok   { fill: rgba(118,185,0,0.15); stroke: #76B900; stroke-width: 1; }
+                .bad  { fill: rgba(255,123,114,0.12); stroke: #ff7b72; stroke-width: 1; }
+                .sl   { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .slb  { fill: #76B900; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+                .sld  { fill: #ff7b72; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .arr3 { stroke: #76B900; stroke-width: 1.5; fill: none; marker-end: url(#mh3); }
+                .arrr { stroke: #ff7b72; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; marker-end: url(#mb3); }
+                .ttl2 { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; }
+            </style>
+            <defs>
+                <marker id="mh3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#76B900"/>
+                </marker>
+                <marker id="mb3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff7b72"/>
+                </marker>
+            </defs>
+            <text x="10" y="18" class="ttl2">Two-phase commit pattern for multi-file edits</text>
+
+            <rect x="10"  y="28"  width="155" height="45" rx="4" class="ph2"/>
+            <text x="20"  y="50"  class="sl">1. Snapshot originals</text>
+            <text x="20"  y="64"  class="sl">git stash / copy to /tmp</text>
+
+            <path d="M 165 50 L 205 50" class="arr3"/>
+
+            <rect x="206" y="28"  width="155" height="45" rx="4" class="ph2"/>
+            <text x="216" y="50"  class="sl">2. Apply all patches</text>
+            <text x="216" y="64"  class="sl">in memory (dry run)</text>
+
+            <path d="M 361 50 L 401 50" class="arr3"/>
+
+            <rect x="402" y="28"  width="155" height="45" rx="4" class="ph2"/>
+            <text x="412" y="50"  class="sl">3. Validate all patches</text>
+            <text x="412" y="64"  class="sl">parse + lint checks</text>
+
+            <path d="M 557 50 L 597 50" class="arr3"/>
+
+            <rect x="598" y="28"  width="72" height="45" rx="4" class="ok"/>
+            <text x="608" y="55"  class="slb">Commit</text>
+
+            <path d="M 479 73 L 479 100" class="arrr"/>
+
+            <rect x="402" y="101" width="155" height="45" rx="4" class="bad"/>
+            <text x="412" y="123" class="sld">Validation FAILED</text>
+            <text x="412" y="137" class="sld">abort all writes</text>
+
+            <path d="M 557 124 L 598 124" class="arrr"/>
+
+            <rect x="598" y="101" width="72" height="45" rx="4" class="bad"/>
+            <text x="608" y="128" class="sld">Rollback</text>
+
+            <text x="10"  y="180" class="ttl2">git-based rollback (the simplest approach)</text>
+            <rect x="10"  y="192" width="650" height="55" rx="4" class="ph2"/>
+            <text x="20"  y="213" class="sl">git stash  &mdash;  apply patches  &mdash;  run tests</text>
+            <text x="20"  y="230" class="slb">pass: git stash drop + git commit -m "..."</text>
+            <text x="20"  y="247" class="sld">fail: git checkout -- .  (restore all modified files instantly)</text>
+        </svg>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">In-memory staging before any writes</div>
+        <p>The safest pattern (used by Aider): build all edited file contents in memory, run a syntax-check pass on every file (e.g. <code>py_compile</code> for Python, <code>rustfmt --check</code> for Rust), and only if all pass, write to disk atomically using <code>os.replace()</code> (which is an <strong>atomic rename</strong> on POSIX). No partial state ever hits disk. If a write fails mid-way due to disk full or permissions, the un-replaced files are unchanged &mdash; repair by writing the remainder.</p>
+    </div>
+
+    <h3>Conflict detection for concurrent edits</h3>
+    <p>In multi-agent or long-session scenarios, a file may have been modified externally since it was read. Agents should compare the <strong>SHA-256 of the file at read time</strong> with the file at write time. If they differ, the agent must re-read and re-apply its edit rather than clobber an intervening change.</p>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Context Window Management &mdash; Load, Summarise, Forget</h2>
+    <p>Even a 200 k-token context window fills quickly during a multi-step edit session: conversation turns, file reads, test output, error messages, and the agent&rsquo;s own reasoning all compete for the same budget. Managing what stays in context is as important as retrieval.</p>
+
+    <div class="hierarchy">
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Fixed</div>
+            <div class="hierarchy-items">
+                <span class="hierarchy-item accent">System prompt + CLAUDE.md</span>
+                <span class="hierarchy-item accent">Repo map (ctags / Aider)</span>
+                <span class="hierarchy-item accent">Key config files</span>
+            </div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Working set</div>
+            <div class="hierarchy-items">
+                <span class="hierarchy-item">Current task file(s)</span>
+                <span class="hierarchy-item">Active test file</span>
+                <span class="hierarchy-item">Recent error output</span>
+            </div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Summarised</div>
+            <div class="hierarchy-items">
+                <span class="hierarchy-item">Earlier conversation turns</span>
+                <span class="hierarchy-item">Previously edited files (summary)</span>
+            </div>
+        </div>
+        <div class="hierarchy-level">
+            <div class="hierarchy-label">Forgotten</div>
+            <div class="hierarchy-items">
+                <span class="hierarchy-item">Irrelevant retrieved files</span>
+                <span class="hierarchy-item">Verbose tool output (truncated)</span>
+            </div>
+        </div>
+    </div>
+
+    <h3>Concrete techniques</h3>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Sliding context window</h4>
+            <p>Keep only the last <em>K</em> conversation turns verbatim. Earlier turns are replaced with a one-paragraph summary generated by a smaller/cheaper model (e.g. Haiku or GPT-4o-mini). Claude Code uses a compaction step that fires when context utilisation exceeds a threshold (~85%).</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Tool-output truncation</h4>
+            <p>Bash command output is capped at a configurable limit (default ~8 k tokens in Claude Code). Test runners that emit 50 k lines of verbose output are truncated to the first N lines plus the summary line. The agent sees enough to diagnose the failure without wasting budget.</p>
+        </div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Prompt caching changes the calculus</div>
+        <p>Anthropic&rsquo;s prompt cache (as of claude-3-5-sonnet-20241022 and later) caches the KV state of the first N tokens. If the system prompt + repo map is stable turn-to-turn, those tokens are billed at <strong>10% of normal input cost</strong> after the first hit. This flips the optimisation: it is now <em>cheaper</em> to keep a large stable prefix (repo map, documentation) than to compute it each turn. Aider 0.55+ and Claude Code both exploit this. The practical implication: put the stable repo map near the top of context, not at the bottom.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>Tool Design for Editing &mdash; The Read/Edit/Write Trio</h2>
+    <p>Claude Code exposes three core editing tools. Their design is not arbitrary: each enforces a constraint that prevents a class of common failure.</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Read</h4>
+            <p>Returns the current file contents with line numbers. The agent <strong>must</strong> call Read before Edit &mdash; the tool system enforces this. This prevents the model from editing a stale mental image of the file from its training data.</p>
+            <ul>
+                <li><code>file_path</code>: absolute path</li>
+                <li><code>offset</code>: start line (0-indexed)</li>
+                <li><code>limit</code>: max lines (default 2 000)</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Edit</h4>
+            <p>Search-replace within the file loaded by a prior Read call. The tool verifies that <code>old_string</code> appears <strong>exactly once</strong> in the current file before applying. Uniqueness enforcement prevents accidental mass-replace.</p>
+            <ul>
+                <li><code>file_path</code>: must match the prior Read</li>
+                <li><code>old_string</code>: must be unique</li>
+                <li><code>new_string</code>: replacement text</li>
+                <li><code>replace_all</code>: opt-in for all occurrences</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Write</h4>
+            <p>Writes a complete new file, also requiring a prior Read (or explicit new-file declaration). Used when the change is so large that search-replace is impractical, or when creating a new file entirely.</p>
+            <ul>
+                <li>Requires Read first for existing files</li>
+                <li>Atomically replaces via <code>os.replace()</code></li>
+                <li>Returns the bytes written for verification</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Why the &ldquo;must read first&rdquo; constraint matters</h3>
+
+    <div class="callout">
+        <div class="callout-label">The stale-context failure mode</div>
+        <p>Without the Read-before-Edit constraint, a model trained on code from 2024 might &ldquo;remember&rdquo; an older version of a file and generate an Edit with an <code>old_string</code> that no longer exists. The Edit tool will reject it (<em>&ldquo;old_string not found&rdquo;</em>) and the agent is forced to re-read. This friction is by design: it is far better to fail loudly at the tool layer than to silently apply a patch to the wrong content. In SWE-bench evaluations, eliminating this category of error accounts for ~5&ndash;10% of the pass@1 gap between agents.</p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">Tool-call sequence for a typical single-function edit</div>
+<pre><code><span class="cm">// Turn 1: agent reads the file</span>
+<span class="fn">Read</span>({ file_path: <span class="str">"src/db/pool.py"</span>, offset: <span class="num">40</span>, limit: <span class="num">20</span> })
+<span class="cm">// → returns lines 40–60 with line numbers</span>
+
+<span class="cm">// Turn 2: agent issues the precise edit</span>
+<span class="fn">Edit</span>({
+  file_path: <span class="str">"src/db/pool.py"</span>,
+  old_string: <span class="str">"    def acquire(self):\n        conn = self._pool.pop()\n        return conn"</span>,
+  new_string: <span class="str">"    async def acquire(self) -> Connection:\n        if not self._pool:\n            raise PoolExhausted(f\"pool exhausted\")\n        return self._pool.pop()"</span>
+})
+<span class="cm">// → success: { bytes_written: 412 }</span>
+
+<span class="cm">// Turn 3: agent verifies by running the tests</span>
+<span class="fn">Bash</span>({ command: <span class="str">"pytest tests/test_pool.py -x -q 2>&amp;1 | tail -20"</span> })</code></pre>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Aider vs Cursor vs Claude Code &mdash; Three Architectures</h2>
+    <p>The three most widely used coding agents have chosen fundamentally different edit architectures. Understanding these choices explains their respective strengths and failure modes.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Dimension</th><th>Aider</th><th>Cursor</th><th>Claude Code</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Edit format</strong></td><td>Search-replace block (EDITOR) or unified diff (DIFF), model-selected per request</td><td>Inline streaming diff shown to user; accepts/rejects per hunk</td><td>Read&rarr;Edit&rarr;Write tool calls; search-replace semantics</td></tr>
+                <tr><td><strong>Context loading</strong></td><td>Pre-built ctags repo-map; user adds files explicitly</td><td>@-symbol retrieval; IDE document context always present</td><td>Tool-driven, lazy &mdash; reads only what is needed</td></tr>
+                <tr><td><strong>Model API</strong></td><td>Any litellm-compatible model; EDITOR mode requires strong models (Sonnet 3.7+, GPT-4o)</td><td>Proprietary hosted models; optional BYO-API</td><td>Anthropic API; claude-sonnet-4 / claude-opus-4</td></tr>
+                <tr><td><strong>Test loop</strong></td><td>Optional <code>--test-cmd</code>; auto-iterates on test failure up to N rounds</td><td>Not automatic; user-driven</td><td>Bash tool; agent decides when to run tests</td></tr>
+                <tr><td><strong>Multi-file atomicity</strong></td><td>In-memory staging, then atomic writes per file; git used for rollback</td><td>User accepts/rejects each file diff independently</td><td>Sequential tool calls; no formal transaction; agent must detect partial failure</td></tr>
+                <tr><td><strong>Open source</strong></td><td>Yes (MIT, github.com/paul-gauthier/aider)</td><td>No (Cursor Inc., Electron app)</td><td>Yes (Apache 2.0, github.com/anthropics/claude-code)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Aider&rsquo;s strength</h4>
+            <p>Terminal-native, scriptable, works in CI. The repo-map ensures context is comprehensive upfront. EDITOR format is the most reliable for large single-function edits. The <code>--architect</code> mode uses two models: a high-quality planner and a cheaper executor.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Cursor&rsquo;s strength</h4>
+            <p>IDE-native diff review gives the user fine-grained control before writes land. Background indexing means @codebase queries are fast even on cold starts. Multi-model routing (cheap for chat, expensive for apply) controls cost.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Claude Code&rsquo;s strength</h4>
+            <p>Zero pre-configuration &mdash; no index to build. Tool-call transparency: every file access is explicit and auditable. The agent reasons about <em>what to read next</em> rather than relying on a potentially-stale index. Strong on novel codebases it has never seen.</p>
+        </div>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>Test-Driven Agentic Edits</h2>
+    <p>A failing test is the highest-signal feedback signal an agent can receive. The TDD agentic loop is simple in principle but requires careful engineering to avoid infinite retry loops and token runaway.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 680 240" width="680" height="240" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .nd   { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+                .nd.a { fill: rgba(118,185,0,0.1); stroke: #76B900; stroke-width: 1.5; }
+                .nd.r { fill: rgba(255,123,114,0.1); stroke: #ff7b72; stroke-width: 1.5; }
+                .nd.g { fill: rgba(118,185,0,0.1); stroke: #76B900; stroke-width: 1.5; }
+                .nt   { fill: #e6edf3; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; text-anchor: middle; }
+                .ns   { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .el   { stroke: #76B900; stroke-width: 1.5; fill: none; marker-end: url(#mh4); }
+                .elr  { stroke: #ff7b72; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; marker-end: url(#mb4); }
+                .elbl { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+                .ttl3 { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; }
+            </style>
+            <defs>
+                <marker id="mh4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#76B900"/>
+                </marker>
+                <marker id="mb4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff7b72"/>
+                </marker>
+            </defs>
+
+            <text x="10" y="18" class="ttl3">TDD agentic loop with retry cap</text>
+
+            <rect x="10"   y="30"  width="130" height="50" rx="6" class="nd a"/>
+            <text x="75"   y="57"  class="nt">Write / load test</text>
+            <text x="75"   y="72"  class="ns">pytest -x -q</text>
+
+            <path d="M 140 55 L 185 55" class="el"/>
+
+            <rect x="186"  y="30"  width="130" height="50" rx="6" class="nd"/>
+            <text x="251"  y="57"  class="nt">Read failing test</text>
+            <text x="251"  y="72"  class="ns">+ retrieve src files</text>
+
+            <path d="M 316 55 L 361 55" class="el"/>
+
+            <rect x="362"  y="30"  width="130" height="50" rx="6" class="nd"/>
+            <text x="427"  y="57"  class="nt">Apply edit</text>
+            <text x="427"  y="72"  class="ns">Read&rarr;Edit&rarr;Write</text>
+
+            <path d="M 492 55 L 537 55" class="el"/>
+
+            <rect x="538"  y="30"  width="130" height="50" rx="6" class="nd"/>
+            <text x="603"  y="57"  class="nt">Run tests again</text>
+            <text x="603"  y="72"  class="ns">capture output</text>
+
+            <path d="M 603 80 L 603 130" class="elr"/>
+            <text x="610"  y="115" class="elbl">FAIL &amp; retries &lt; N</text>
+
+            <rect x="538"  y="131" width="130" height="50" rx="6" class="nd r"/>
+            <text x="603"  y="158" class="nt">Analyse failure</text>
+            <text x="603"  y="173" class="ns">re-read output</text>
+
+            <path d="M 538 156 L 493 156" class="elr"/>
+            <path d="M 427 156 L 427 80"  class="elr"/>
+
+            <path d="M 538 55 L 492 55" class="el" style="display:none"/>
+            <path d="M 603 30 L 603 20 L 10 20 L 10 30" class="el" style="display:none"/>
+
+            <text x="250"  y="200" class="ttl3">PASS &rarr; commit; retries &ge; N &rarr; escalate to user</text>
+            <rect x="186"  y="155" width="130" height="50" rx="6" class="nd g"/>
+            <text x="251"  y="182" class="nt">PASS &mdash; commit</text>
+            <path d="M 538 156 L 386 156" class="el"/>
+            <text x="460"  y="150" class="elbl">PASS</text>
+        </svg>
+    </div>
+
+    <h3>Practical engineering details</h3>
+    <div class="callout">
+        <div class="callout-label">Retry budget and escalation</div>
+        <p>Set a hard cap of <strong>3&ndash;5 retry rounds</strong> per edit task. After that, the agent should surface the failure to the user rather than spinning. Without a cap, a model that oscillates between two broken states will consume the entire token budget. Aider uses <code>--auto-test --test-cmd</code> with <code>--num-ctx</code> to limit rounds; Claude Code delegates the retry decision to the agent&rsquo;s own reasoning (which means a well-prompted agent self-stops, and a poorly-prompted one does not).</p>
+        <p><strong>Truncate test output.</strong> A failing pytest run with 200 test files can emit 100 k tokens of output. Pass only the first failed test&rsquo;s traceback and summary line to the next model call; do not dump all output into context.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Failure Recovery &mdash; When the Model Produces Bad Diffs</h2>
+    <p>Even the best models produce malformed or semantically incorrect diffs on a non-trivial fraction of requests. Production agents need a layered recovery strategy.</p>
+
+    <h3>Taxonomy of edit failures</h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Failure class</th><th>Example</th><th>Detection</th><th>Recovery</th></tr></thead>
+            <tbody>
+                <tr><td>Parse failure</td><td>Model emits malformed fence block, missing REPLACE marker</td><td>Regex parse of agent output</td><td>Re-prompt: &ldquo;your last edit was malformed; please try again with the correct format&rdquo;</td></tr>
+                <tr><td>No-match failure</td><td><code>old_string</code> not found in the current file</td><td>Edit tool returns <code>old_string not found</code></td><td>Force a Read call, then retry; if it fails again, escalate</td></tr>
+                <tr><td>Ambiguous match</td><td><code>old_string</code> matches 3 locations</td><td>Edit tool returns <code>old_string not unique</code></td><td>Re-prompt with surrounding context to make old_string unique</td></tr>
+                <tr><td>Syntax error</td><td>Python indentation broken, mismatched braces</td><td><code>py_compile</code> / <code>rustfmt --check</code></td><td>Roll back file; re-prompt with error message + original file content</td></tr>
+                <tr><td>Semantic error</td><td>Tests pass but logic is wrong; wrong function renamed</td><td>Test suite failure</td><td>Test-driven retry loop (slide 07); after N failures escalate</td></tr>
+                <tr><td>Wrong file</td><td>Model edits a test file instead of the implementation</td><td>Code review (human or automated)</td><td>Human checkpoint; agents should not silently clobber unexpected files</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Fuzzy-matching as a first-line recovery</h3>
+    <div class="code-block">
+        <div class="code-header">Python: fuzzy old_string matching with difflib</div>
+<pre><code><span class="kw">from</span> difflib <span class="kw">import</span> SequenceMatcher
+
+<span class="kw">def</span> <span class="fn">find_best_match</span>(source: <span class="type">str</span>, pattern: <span class="type">str</span>,
+                    threshold: <span class="type">float</span> = <span class="num">0.85</span>) <span class="kw">-&gt;</span> <span class="type">tuple</span>[<span class="type">int</span>, <span class="type">int</span>] | <span class="kw">None</span>:
+    <span class="str">"""Return (start, end) char offsets of best fuzzy match, or None."""</span>
+    lines = source.splitlines(<span class="kw">True</span>)
+    pat_lines = pattern.splitlines(<span class="kw">True</span>)
+    best_ratio, best_start, best_end = <span class="num">0.0</span>, <span class="num">0</span>, <span class="num">0</span>
+    <span class="kw">for</span> i <span class="kw">in</span> range(<span class="fn">len</span>(lines) - <span class="fn">len</span>(pat_lines) + <span class="num">1</span>):
+        window = lines[i : i + <span class="fn">len</span>(pat_lines)]
+        ratio = SequenceMatcher(<span class="kw">None</span>, window, pat_lines).ratio()
+        <span class="kw">if</span> ratio &gt; best_ratio:
+            best_ratio, best_start = ratio, i
+            best_end = i + <span class="fn">len</span>(pat_lines)
+    <span class="kw">if</span> best_ratio &gt;= threshold:
+        start_char = <span class="fn">sum</span>(<span class="fn">len</span>(l) <span class="kw">for</span> l <span class="kw">in</span> lines[:best_start])
+        end_char   = <span class="fn">sum</span>(<span class="fn">len</span>(l) <span class="kw">for</span> l <span class="kw">in</span> lines[:best_end])
+        <span class="kw">return</span> start_char, end_char
+    <span class="kw">return</span> <span class="kw">None</span></code></pre>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">When to stop retrying and ask the human</div>
+        <p>A safe heuristic: if the same file has been patched and rolled back more than twice in a single task, pause and describe the failure to the user. Automated recovery from a third consecutive failure is unlikely to succeed and likely to produce confusing state. The user can then rephrase the task, split it into smaller steps, or make the initial change manually.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>What to Take Away</h2>
+    <ul>
+        <li><strong>Edit format choice is consequential.</strong> Whole-file rewrites are unambiguous but token-expensive. Unified diffs are compact but model-error-prone on line numbers. Search-replace blocks are the practical sweet spot: compact, unambiguous, and fuzzy-matchable.</li>
+        <li><strong>Uniqueness enforcement prevents silent clobbers.</strong> The Claude Code Edit tool&rsquo;s requirement that <code>old_string</code> appear exactly once is not a limitation &mdash; it is a safety invariant. Never relax it silently; use <code>replace_all</code> only when that is genuinely the intent.</li>
+        <li><strong>Multi-file edits need a transaction model.</strong> Stage in memory, validate syntax, then write atomically. Use <code>git checkout -- .</code> or <code>os.replace()</code> semantics for rollback. Never leave the repo in a partial state.</li>
+        <li><strong>Context window is a finite resource.</strong> Put stable content (repo map, system prompt) first for prompt-cache hits. Truncate test output. Summarise old conversation turns. The &ldquo;forget&rdquo; step is as important as the &ldquo;load&rdquo; step.</li>
+        <li><strong>Know the three agents&rsquo; edit architectures.</strong> Aider stages in memory before writing; Cursor requires explicit user acceptance; Claude Code issues sequential tool calls with no formal transaction. Design your own agent with these trade-offs in mind.</li>
+        <li><strong>TDD loops are the highest-signal feedback.</strong> Run tests after every edit. Cap retries at 3&ndash;5. Truncate test output. Escalate to the user on repeated failure.</li>
+        <li><strong>Failure taxonomy drives recovery.</strong> Parse failures &rarr; re-prompt format. No-match &rarr; force re-read. Syntax error &rarr; rollback. Semantic error &rarr; test-driven retry. Wrong file &rarr; human checkpoint.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">Series complete</div>
+        <p>This deck completes the Coding Agents Internals series. Deck 01 covered <em>how agents find relevant code</em>; this deck covered <em>how agents change it</em>. Together they describe the two core loops of any coding agent: retrieve, then apply. The quality of both loops &mdash; not just the underlying model &mdash; determines task success rates on realistic codebases.</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Coding_Agents">Coding Agents Internals Series</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Coding_Agents">Back to Series Index</a></p>
+</footer>
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+</body>
+</html>
